@@ -19,6 +19,7 @@ public class Client {
     }
 
     public String sendEcho(String msg) {
+        buf = null;
         buf = msg.getBytes();
         DatagramPacket packet
                 = new DatagramPacket(buf, buf.length, address, 4445);
