@@ -1,57 +1,60 @@
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.InetAddress;
 import java.net.SocketException;
 
-public class Server extends Thread {
-    public static int BUFFER_SIZE = 256;
+public class Server implements Runnable{
+
     private DatagramSocket socket;
-    private boolean running;
-    private byte[] buf;
-    private int port;
 
 
-    public Server(int port) {
-        this.port = port;
-        try {
-            socket = new DatagramSocket(port);
-        } catch (SocketException e) {
-            e.printStackTrace();
-        }
+    public Server() throws SocketException {
+        socket = new DatagramSocket(4445);
     }
 
     @Override
     public void run() {
-        running = true;
+        byte[] receive = new byte[65535];
 
-        while (running) {
-            buf =  new byte[BUFFER_SIZE];
-            DatagramPacket packet
-                    = new DatagramPacket(buf, buf.length);
+        DatagramPacket DpReceive = null;
+        while (true)
+        {
+
+            // Step 2 : create a DatgramPacket to receive the data.
+            DpReceive = new DatagramPacket(receive, receive.length);
+
+            // Step 3 : revieve the data in byte buffer.
             try {
-                socket.receive(packet);
+                socket.receive(DpReceive);
             } catch (IOException e) {
                 e.printStackTrace();
             }
 
-            InetAddress address = packet.getAddress();
-            int port = packet.getPort();
-           // buf = new byte[BUFFER_SIZE];
-            packet = new DatagramPacket(buf, buf.length, address, port);
-            String received
-                    = new String(packet.getData(), 0, packet.getLength());
-            System.out.println("server say :" + received);
-            if (received.equals("end")) {
-                running = false;
-                continue;
+            System.out.println("Client:-" + data(receive));
+
+            // Exit the server if the client sends "bye"
+            if (data(receive).toString().equals("bye"))
+            {
+                System.out.println("Client sent bye.....EXITING");
+                break;
             }
-            try {
-                socket.send(packet);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+
+            // Clear the buffer after every message.
+            receive = new byte[65535];
         }
-        socket.close();
+    }
+
+    public  StringBuilder data(byte[] a)
+    {
+        if (a == null)
+            return null;
+        StringBuilder ret = new StringBuilder();
+        int i = 0;
+        while (a[i] != 0)
+        {
+            ret.append((char) a[i]);
+            i++;
+        }
+        return ret;
     }
 }
