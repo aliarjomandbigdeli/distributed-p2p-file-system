@@ -14,14 +14,22 @@ public class Client implements Runnable{
         broadcastMessage = "Hello";
     }
 
-    public void run(){
-        byte[] buffer = broadcastMessage.getBytes();
+    public void run() {
+        int i = 0;
+        while (i < 1000){
+            byte[] buffer = (broadcastMessage + i).getBytes();
 
-        DatagramPacket packet = new DatagramPacket(buffer, buffer.length, address, 4445);
-        try {
-            socket.send(packet);
-        } catch (IOException e) {
-            System.out.println("socket can not send data");
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, address, 4445);
+            try {
+                socket.send(packet);
+            } catch (IOException e) {
+                System.out.println("socket can not send data");
+            }
+            ++i;
         }
+        System.out.printf("close");
+        socket.close();
     }
+
+
 }
