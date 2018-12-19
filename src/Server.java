@@ -9,15 +9,19 @@ public class Server extends Thread {
     private DatagramSocket socket;
     private boolean running;
     private byte[] buf;
+    private int port;
 
-    public Server() {
+
+    public Server(int port) {
+        this.port = port;
         try {
-            socket = new DatagramSocket(4445);
+            socket = new DatagramSocket(port);
         } catch (SocketException e) {
             e.printStackTrace();
         }
     }
 
+    @Override
     public void run() {
         running = true;
 
