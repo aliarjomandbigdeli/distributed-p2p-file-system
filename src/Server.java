@@ -3,7 +3,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
 
-public class Server implements Runnable{
+public class Server implements Runnable {
 
     private DatagramSocket socket;
     private Session session;
@@ -28,19 +28,18 @@ public class Server implements Runnable{
         System.out.println("going to send file");
     }
 
-    private boolean hasServerThisFile(StringBuilder s){
-        if(s.equals(session.getFileName()))
+    private boolean hasServerThisFile(StringBuilder s) {
+        if (s.toString().equals(session.getFileName()))
             return true;
         else
             return false;
     }
 
-    private StringBuilder listeningForBroadCastMessage(){
+    private StringBuilder listeningForBroadCastMessage() {
         StringBuilder result;
         byte[] receive = new byte[udpPacketSize];
         DatagramPacket DpReceive = null;
-        while (true)
-        {
+        while (true) {
             // Step 2 : create a DatgramPacket to receive the data.
             DpReceive = new DatagramPacket(receive, receive.length);
 
@@ -57,14 +56,12 @@ public class Server implements Runnable{
         return result;
     }
 
-    private   StringBuilder data(byte[] a)
-    {
+    private StringBuilder data(byte[] a) {
         if (a == null)
             return null;
         StringBuilder ret = new StringBuilder();
         int i = 0;
-        while (a[i] != 0)
-        {
+        while (a[i] != 0) {
             ret.append((char) a[i]);
             i++;
         }
