@@ -7,10 +7,15 @@ public class Server implements Runnable{
 
     private DatagramSocket socket;
     private Seesion seesion;
+    private int udpPacketSize;
+    private int serverPort;
 
     public Server(Seesion s) throws SocketException {
-        socket = new DatagramSocket(4445);
+        this.serverPort = 7654;
+        this.udpPacketSize = 512;
         this.seesion = s;
+        this.socket = new DatagramSocket(serverPort);
+
 
         System.out.println("server is listening for clients...");
     }
