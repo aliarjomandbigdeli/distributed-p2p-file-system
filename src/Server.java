@@ -6,17 +6,15 @@ import java.net.SocketException;
 public class Server implements Runnable{
 
     private DatagramSocket socket;
-    private Seesion seesion;
+    private Session session;
     private int udpPacketSize;
     private int serverPort;
 
-    public Server(Seesion s) throws SocketException {
+    public Server(Session s) throws SocketException {
         this.serverPort = 7654;
         this.udpPacketSize = 512;
-        this.seesion = s;
+        this.session = s;
         this.socket = new DatagramSocket(serverPort);
-
-
         System.out.println("server is listening for clients...");
     }
 

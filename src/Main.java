@@ -9,7 +9,7 @@ public class Main {
         while (true) {
             String s = "Please enter your command in the form of the following commands : \np2p –receive fileName \np2p –serve -name fileName -path filePath\nend";
             System.err.println(s);
-            Seesion currentSession = interpreter(scanner.nextLine());
+            Session currentSession = interpreter(scanner.nextLine());
             if(currentSession == null)
                 return;
             else if(currentSession.isServer()){
@@ -25,19 +25,19 @@ public class Main {
         }
     }
 
-    public static Seesion interpreter(String s) {
-        Seesion result = null;
+    public static Session interpreter(String s) {
+        Session result = null;
         String[] splited = s.split("\\s+");
 
         if(splited.length < 2)
             return result;
 
         else if(splited[1].equals("–receive") && splited.length == 3){
-            result = new Seesion(false);
+            result = new Session(false);
             result.setFileName(splited[2]);
         }
         else if(splited[1].equals("–serve") && splited.length == 6){
-            result = new Seesion(true);
+            result = new Session(true);
             result.setFileName(splited[3]);
             result.setPath(splited[5]);
         }

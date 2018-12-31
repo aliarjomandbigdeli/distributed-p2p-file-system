@@ -7,16 +7,15 @@ import java.util.Objects;
 public class Client implements Runnable{
 
     private DatagramSocket socket;
-    private Seesion seesion;
+    private Session session;
     private ArrayList<InetAddress> broadcastList; // this list contains broadcast ip address of each network interface
 
-    public Client(Seesion s) throws SocketException, UnknownHostException {
+    public Client(Session s) throws SocketException {
         broadcastList = new ArrayList<>();
         getBroadCastIPs(broadcastList);
         socket = new DatagramSocket();
         socket.setBroadcast(true);
-        this.seesion = s;
-
+        this.session = s;
     }
 
     public void run() {
@@ -46,7 +45,7 @@ public class Client implements Runnable{
     private void sendBroadCastMessage(){
         int i = 0;
         while (i < 1000){
-            byte[] buffer = ("hello" + i).getBytes();
+            byte[] buffer = (session.getFileName()).getBytes();
             for (int j = 0; j < broadcastList.size(); j++) {
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length, broadcastList.get(j), 7654);
                 try {

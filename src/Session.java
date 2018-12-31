@@ -4,12 +4,12 @@ import java.util.ArrayList;
  * This class contains all data about two side of connection
  * also running mode of application, ip and port of two side and anything we must keep during session
  */
-public class Seesion {
+public class Session {
     private boolean isServer;
     private String path;
     private String fileName;
 
-    public Seesion(boolean isServer){
+    public Session(boolean isServer){
         this.isServer = isServer;
 
     }
