@@ -122,6 +122,7 @@ public class Client implements Runnable{
             serverIP = null;
             return false;
         }
+        System.out.println(numberOfPacket);
         String answer = "ok";
         String packetCount = "ok";
         DatagramPacket sendPacket =
