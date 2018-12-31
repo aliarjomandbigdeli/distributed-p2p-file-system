@@ -182,11 +182,14 @@ public class Server implements Runnable {
         for (int i = 0; i < packetCounts; i++) {
             bytes = new byte[udpPacketSize];
             bytes[0] = new Integer(i - 128).byteValue();
-            init = (udpPacketSize) * i;
+            if(i == 0)
+                init = 0;
+            else
+                init = (udpPacketSize) * i - 1;
             if(i == (packetCounts - 1))
                 fin = fileContent.length;
             else
-                fin = (udpPacketSize) * (i + 1);
+                fin = init + udpPacketSize - 1;
 
             for (int j = init, k = 1; j < fin; j++, ++k) {
                 bytes[k] = fileContent[j];

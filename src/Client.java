@@ -126,10 +126,10 @@ public class Client implements Runnable {
             break;
         }
         String s = result.toString();
-        s = s.substring(1);
-        String s2 = s.substring(s.indexOf('l'));
+        String s1 = s.substring(1, s.indexOf('l'));
+        String s2 = s.substring(s.indexOf('l') + 1);
         try {
-            numberOfPacket = Integer.parseInt(s);
+            numberOfPacket = Integer.parseInt(s1);
             lasPacketSize = Integer.parseInt(s2);
         } catch (NumberFormatException e) {
             serverPort = -1;
@@ -137,7 +137,6 @@ public class Client implements Runnable {
             return false;
         }
         System.out.println(numberOfPacket);
-        String answer = "ok";
         String packetCount = "ok";
         DatagramPacket sendPacket =
                 new DatagramPacket(packetCount.getBytes(), packetCount.getBytes().length, serverIP, serverPort);
@@ -168,7 +167,7 @@ public class Client implements Runnable {
         byte res[] =  new byte[numberOfPacket * (udpPacketSize - 1) + lasPacketSize];
         int k = 0;
         for (int i = 0; i < receivedSegments.size(); i++) {
-            for (int j = 0; j < receivedSegments.get(i).length; j++) {
+            for (int j = 1; j < receivedSegments.get(i).length; j++) {
                 res [k] = receivedSegments.get(i)[j];
                 k++;
             }
