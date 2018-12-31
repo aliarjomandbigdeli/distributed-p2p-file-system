@@ -20,12 +20,27 @@ public class Server implements Runnable{
 
     @Override
     public void run() {
-        byte[] receive = new byte[65535];
+        while (true) {
+            StringBuilder receivedMessage = listeningForBroadCastMessage();
+            if (hasServerThisFile(receivedMessage))
+                break;
+        }
+        System.out.println("going to send file");
+    }
 
+    private boolean hasServerThisFile(StringBuilder s){
+        if(s.equals(session.getFileName()))
+            return true;
+        else
+            return false;
+    }
+
+    private StringBuilder listeningForBroadCastMessage(){
+        StringBuilder result;
+        byte[] receive = new byte[udpPacketSize];
         DatagramPacket DpReceive = null;
         while (true)
         {
-
             // Step 2 : create a DatgramPacket to receive the data.
             DpReceive = new DatagramPacket(receive, receive.length);
 
@@ -36,21 +51,13 @@ public class Server implements Runnable{
                 e.printStackTrace();
             }
 
-            System.out.println("Client:-" + data(receive));
-
-            // Exit the server if the client sends "bye"
-            if (data(receive).toString().equals("bye"))
-            {
-                System.out.println("Client sent bye.....EXITING");
-                break;
-            }
-
-            // Clear the buffer after every message.
-            receive = new byte[65535];
+            result = data(receive);
+            break;
         }
+        return result;
     }
 
-    public  StringBuilder data(byte[] a)
+    private   StringBuilder data(byte[] a)
     {
         if (a == null)
             return null;

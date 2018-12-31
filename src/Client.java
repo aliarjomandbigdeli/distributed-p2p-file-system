@@ -20,7 +20,8 @@ public class Client implements Runnable{
 
     public void run() {
         sendBroadCastMessage();
-        System.out.printf("close");
+        receivingFile();
+        System.out.println("Connection will be closed...");
         socket.close();
     }
 
@@ -57,4 +58,9 @@ public class Client implements Runnable{
             ++i;
         }
     }
+
+    private void receivingFile(){
+
+    }
+
 }
