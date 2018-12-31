@@ -6,10 +6,13 @@ import java.net.SocketException;
 public class Server implements Runnable{
 
     private DatagramSocket socket;
+    private Seesion seesion;
 
-
-    public Server() throws SocketException {
+    public Server(Seesion s) throws SocketException {
         socket = new DatagramSocket(4445);
+        this.seesion = s;
+
+        System.out.println("server is listening for clients...");
     }
 
     @Override

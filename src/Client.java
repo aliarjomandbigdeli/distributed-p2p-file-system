@@ -6,11 +6,14 @@ public class Client implements Runnable{
     private DatagramSocket socket;
     private InetAddress address;
     private String broadcastMessage;
+    private Seesion seesion;
 
-    public Client() throws SocketException, UnknownHostException {
+    public Client(Seesion s) throws SocketException, UnknownHostException {
         socket = new DatagramSocket();
         socket.setBroadcast(true);
         address = InetAddress.getByName("255.255.255.255");
+
+        this.seesion = s;
         broadcastMessage = "Hello";
     }
 
