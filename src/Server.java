@@ -48,7 +48,11 @@ public class Server implements Runnable {
             clientIP = null;
         }
         System.out.println("going to send file");
-
+        try {
+            sendingFileToClient();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
     }
 
@@ -150,5 +154,17 @@ public class Server implements Runnable {
             return true;
         else
             return false;
+    }
+
+    private void sendingFileToClient() throws IOException {
+        int i = 0;
+        while (i < 100){
+            String packetCount = "p:" + i;
+            DatagramPacket sendPacket =
+                    new DatagramPacket(packetCount.getBytes(), packetCount.getBytes().length, clientIP, clientPort);
+
+            socket.send(sendPacket);
+            ++i;
+        }
     }
 }
