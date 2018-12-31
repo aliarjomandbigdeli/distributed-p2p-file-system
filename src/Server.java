@@ -1,3 +1,5 @@
+import jdk.jfr.Unsigned;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -6,6 +8,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
+import java.util.ArrayList;
 
 public class Server implements Runnable {
 
@@ -14,7 +17,8 @@ public class Server implements Runnable {
     private int udpPacketSize;
     private int serverPort;
     private byte fileContent[];
-
+    private ArrayList<byte[]> segments;
+    private int packetCounts;
     private InetAddress clientIP;
     private int clientPort;
 
@@ -26,19 +30,23 @@ public class Server implements Runnable {
         this.socket = new DatagramSocket(serverPort);
         this.clientIP = null;
         this.clientPort = -1;
+        segments = new ArrayList<>();
         System.out.println("server is listening for clients...");
     }
 
     @Override
     public void run() {
         readFileFromDisk(); //read file as array of bytes from disk
+        segmentationFile();
 
         boolean shouldContinue = true;
         while (shouldContinue) {
             StringBuilder receivedMessage = listeningForBroadCastMessage();
             try {
-                if (hasServerThisFile(receivedMessage) && makeAcknowledge())
+                if (hasServerThisFile(receivedMessage) && makeAcknowledge()) {
+                    shouldContinue = false;
                     break;
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -119,52 +127,71 @@ public class Server implements Runnable {
                 System.out.println("Error while closing stream: " + ioe);
             }
         }
+        int numberOfPacket = (fileContent.length / (udpPacketSize - 1)) + 1;
+        this.packetCounts = numberOfPacket;
     }
 
     private boolean makeAcknowledge() throws IOException {
-        boolean res = false;
-        int numberOfPacket = (fileContent.length / 511) + 1;
-
         //1 - send number of packet to client
-        String packetCount = "p:" + numberOfPacket;
+        int remainLast = (packetCounts * (udpPacketSize - 1 ) - fileContent.length);
+        String packetCount = "p" + packetCounts + "l" + remainLast;
         DatagramPacket sendPacket =
                 new DatagramPacket(packetCount.getBytes(), packetCount.getBytes().length, clientIP, clientPort);
 
         socket.send(sendPacket);
 
         //2 - wait to receive "ok"
-        StringBuilder result;
+        StringBuilder result = new StringBuilder("");
         byte[] receive = new byte[udpPacketSize];
         DatagramPacket DpReceive = null;
-        while (true) {
-            // Step 2 : create a DatagramPacket to receive the data.
-            DpReceive = new DatagramPacket(receive, receive.length);
+        int limit = 256;
+        int i = 0;
+        socket.close();
+        socket = new DatagramSocket(serverPort);
 
-            // Step 3 : receive the data in byte buffer.
-            try {
-                socket.receive(DpReceive);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        // Step 2 : create a DatagramPacket to receive the data.
+        DpReceive = new DatagramPacket(receive, receive.length);
 
-            result = data(receive);
-            break;
+        // Step 3 : receive the data in byte buffer.
+        try {
+            socket.receive(DpReceive);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-        if(result.toString().equals("ok"))
+
+        result = data(receive);
+
+
+        if (result.toString().equals("ok"))
             return true;
         else
             return false;
     }
 
     private void sendingFileToClient() throws IOException {
-        int i = 0;
-        while (i < 100){
-            String packetCount = "p:" + i;
+        for (int i = 0; i < segments.size(); i++) {
             DatagramPacket sendPacket =
-                    new DatagramPacket(packetCount.getBytes(), packetCount.getBytes().length, clientIP, clientPort);
-
+                    new DatagramPacket(segments.get(i), segments.get(i).length , clientIP, clientPort);
             socket.send(sendPacket);
-            ++i;
+        }
+    }
+
+    private void segmentationFile() {
+        byte [] bytes;
+        int init = 0,fin = 0;
+        for (int i = 0; i < packetCounts; i++) {
+            bytes = new byte[udpPacketSize];
+            bytes[0] = new Integer(i - 128).byteValue();
+            init = (udpPacketSize) * i;
+            if(i == (packetCounts - 1))
+                fin = fileContent.length;
+            else
+                fin = (udpPacketSize) * (i + 1);
+
+            for (int j = init, k = 1; j < fin; j++, ++k) {
+                bytes[k] = fileContent[j];
+            }
+            segments.add(bytes);
         }
     }
 }

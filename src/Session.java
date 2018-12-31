@@ -9,9 +9,9 @@ public class Session {
     private String path;
     private String fileName;
 
+
     public Session(boolean isServer){
         this.isServer = isServer;
-
     }
 
     public boolean isServer() {
@@ -36,5 +36,8 @@ public class Session {
 
     public void setFileName(String fileName) {
         this.fileName = fileName;
+        if(!isServer){
+            path = fileName;
+        }
     }
 }

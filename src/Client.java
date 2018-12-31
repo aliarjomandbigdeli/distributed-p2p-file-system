@@ -1,10 +1,13 @@
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.*;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.Objects;
 
-public class Client implements Runnable{
+public class Client implements Runnable {
 
     private DatagramSocket socket;
     private Session session;
@@ -12,7 +15,9 @@ public class Client implements Runnable{
     private InetAddress serverIP;
     private int serverPort;
     private int numberOfPacket;
+    private int lasPacketSize;
     private int udpPacketSize;
+    private ArrayList<byte[]> receivedSegments;
 
     public Client(Session s) throws SocketException {
         broadcastList = new ArrayList<>();
@@ -21,23 +26,28 @@ public class Client implements Runnable{
         socket.setBroadcast(true);
         this.session = s;
         udpPacketSize = 512;
+        receivedSegments = new ArrayList<>();
     }
 
     public void run() {
         while (true) {
-            sendBroadCastMessage();
             try {
-                if(makeAcknowledge())
+                sendBroadCastMessage();
+            } catch (SocketException e) {
+                e.printStackTrace();
+            }
+            try {
+                if (makeAcknowledge())
                     break;
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
         receivingFile();
+        joinSegments();
         System.out.println("Connection will be closed...");
         socket.close();
     }
-
 
     private void getBroadCastIPs(ArrayList<InetAddress> ipList) throws SocketException {
         Enumeration<NetworkInterface> interfaces
@@ -56,27 +66,26 @@ public class Client implements Runnable{
         }
     }
 
-    private void sendBroadCastMessage(){
-        int i = 0;
-        while (i < 1000){
-            byte[] buffer = (session.getFileName()).getBytes();
-            for (int j = 0; j < broadcastList.size(); j++) {
-                DatagramPacket packet = new DatagramPacket(buffer, buffer.length, broadcastList.get(j), 7654);
-                try {
-                    socket.send(packet);
-                } catch (IOException e) {
-                    System.out.println("socket can not send data");
-                }
+    private void sendBroadCastMessage() throws SocketException {
+        socket.setBroadcast(true);
+        byte[] buffer = (session.getFileName()).getBytes();
+        for (int j = 0; j < broadcastList.size(); j++) {
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length, broadcastList.get(j), 7654);
+            try {
+                socket.send(packet);
+            } catch (IOException e) {
+                System.out.println("socket can not send data");
             }
-            ++i;
         }
+        socket.setBroadcast(false);
     }
 
-    private void receivingFile(){
-        StringBuilder result;
+    private void receivingFile() {
+        ArrayList<Integer> helpIndex = new ArrayList<>();
+        int limit = numberOfPacket;
         byte[] receive = new byte[udpPacketSize];
         DatagramPacket DpReceive = null;
-        while (true) {
+        while (limit > 0) {
             // Step 2 : create a DatagramPacket to receive the data.
             DpReceive = new DatagramPacket(receive, receive.length);
 
@@ -87,8 +96,11 @@ public class Client implements Runnable{
                 e.printStackTrace();
             }
 
-            result = data(receive);
-            System.out.println(result);
+            if(!helpIndex.contains(new Integer(receive[0] + 128))){
+                helpIndex.add(new Integer(receive[0] + 128));
+                receivedSegments.add(receive);
+                limit --;
+            }
             receive = new byte[udpPacketSize];
         }
     }
@@ -115,9 +127,11 @@ public class Client implements Runnable{
         }
         String s = result.toString();
         s = s.substring(1);
+        String s2 = s.substring(s.indexOf('l'));
         try {
             numberOfPacket = Integer.parseInt(s);
-        }catch (NumberFormatException e) {
+            lasPacketSize = Integer.parseInt(s2);
+        } catch (NumberFormatException e) {
             serverPort = -1;
             serverIP = null;
             return false;
@@ -144,4 +158,27 @@ public class Client implements Runnable{
         return ret;
     }
 
+    private void joinSegments(){
+        receivedSegments.sort(new Comparator<byte[]>() {
+            @Override
+            public int compare(byte[] o1, byte[] o2) {
+                return (new Integer(o1[0] + 128)).compareTo(new Integer(o2[0] + 128));
+            }
+        });
+        byte res[] =  new byte[numberOfPacket * (udpPacketSize - 1) + lasPacketSize];
+        int k = 0;
+        for (int i = 0; i < receivedSegments.size(); i++) {
+            for (int j = 0; j < receivedSegments.get(i).length; j++) {
+                res [k] = receivedSegments.get(i)[j];
+                k++;
+            }
+        }
+        try (FileOutputStream fos = new FileOutputStream(session.getPath())) {
+            fos.write(res);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 }
