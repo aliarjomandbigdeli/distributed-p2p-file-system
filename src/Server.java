@@ -1,9 +1,6 @@
 import jdk.jfr.Unsigned;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -21,6 +18,7 @@ public class Server implements Runnable {
     private int packetCounts;
     private InetAddress clientIP;
     private int clientPort;
+    private int remainLast;
 
 
     public Server(Session s) throws SocketException {
@@ -61,7 +59,7 @@ public class Server implements Runnable {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
+        socket.close();
     }
 
     private boolean hasServerThisFile(StringBuilder s) {
@@ -129,11 +127,12 @@ public class Server implements Runnable {
         }
         int numberOfPacket = (fileContent.length / (udpPacketSize - 1)) + 1;
         this.packetCounts = numberOfPacket;
+        remainLast = (fileContent.length - ((packetCounts - 1) * (udpPacketSize - 1 )));
     }
 
     private boolean makeAcknowledge() throws IOException {
         //1 - send number of packet to client
-        int remainLast = (packetCounts * (udpPacketSize - 1 ) - fileContent.length);
+
         String packetCount = "p" + packetCounts + "l" + remainLast;
         DatagramPacket sendPacket =
                 new DatagramPacket(packetCount.getBytes(), packetCount.getBytes().length, clientIP, clientPort);
@@ -185,16 +184,32 @@ public class Server implements Runnable {
             if(i == 0)
                 init = 0;
             else
-                init = (udpPacketSize) * i - 1;
+                init = (udpPacketSize - 1) * i;
             if(i == (packetCounts - 1))
-                fin = fileContent.length;
+                fin = fileContent.length - 1;
             else
-                fin = init + udpPacketSize - 1;
+                fin = (udpPacketSize - 1) * (i + 1) - 1;
 
-            for (int j = init, k = 1; j < fin; j++, ++k) {
+            for (int j = init, k = 1; j <= fin; j++, ++k) {
                 bytes[k] = fileContent[j];
             }
             segments.add(bytes);
         }
+//        byte res[] =  new byte[(packetCounts - 1) * (udpPacketSize - 1) + remainLast];
+//        int k = 0;
+//        for (int i = 0; i < segments.size(); i++) {
+//            fin  = (i == segments.size() - 1) ? remainLast : segments.get(i).length;
+//            for (int j = 1; j < fin; j++) {
+//                res [k] = segments.get(i)[j];
+//                k++;
+//            }
+//        }
+//        try (FileOutputStream fos = new FileOutputStream(session.getPath())) {
+//            fos.write(res);
+//        } catch (FileNotFoundException e) {
+//            e.printStackTrace();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
     }
 }

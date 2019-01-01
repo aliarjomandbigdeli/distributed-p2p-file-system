@@ -164,13 +164,13 @@ public class Client implements Runnable {
                 return (new Integer(o1[0] + 128)).compareTo(new Integer(o2[0] + 128));
             }
         });
-        byte res[] =  new byte[numberOfPacket * (udpPacketSize - 1) + lasPacketSize];
+        byte res[] =  new byte[(numberOfPacket - 1) * (udpPacketSize - 1) + lasPacketSize];
         int k = 0;
         for (int i = 0; i < receivedSegments.size(); i++) {
-            for (int j = 1; j < receivedSegments.get(i).length; j++) {
-                res [k] = receivedSegments.get(i)[j];
-                k++;
-            }
+            int fin  = (i == receivedSegments.size() - 1) ? lasPacketSize  + 1: receivedSegments.get(i).length;
+            for (int j = 1; j < fin; j++) {
+                res [k++] = receivedSegments.get(i)[j];
+             }
         }
         try (FileOutputStream fos = new FileOutputStream(session.getPath())) {
             fos.write(res);
